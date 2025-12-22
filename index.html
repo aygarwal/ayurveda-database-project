@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRAYU Local Search</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Plant Search</h1>
+        <div class="search-box">
+            <input type="text" id="plantInput" placeholder="Enter plant name (e.g., Moringa)">
+            <button id="searchBtn">Get JSON</button>
+        </div>
+        
+        <div id="status"></div>
+        
+        <div class="result-area">
+            <table id="plantTable">
+                <thead>
+                    <tr>
+                        <th>Phytochemicals</th>
+                        <th>Formulations</th>
+                        <th>Diseases</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+    <script src="js/script.js"></script>
+</body>
+</html>
