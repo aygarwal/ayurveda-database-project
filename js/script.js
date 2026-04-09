@@ -20,11 +20,7 @@ searchBtn.addEventListener('click', async () => {
     }
 });
 
-function renderTable(data, searchedTerm) {
-    tableBody.innerHTML = ""; 
-
-    // 1. Create a Lookup Map for Node Names
-    const nodeLookup = {};
+function createNodeLookupFromPlantJSON (data, nodeLookup) {
     if (data.nodes) {
         data.nodes.forEach(node => {
             // 1. Use 'let' instead of 'const' so we can update the value
@@ -50,12 +46,10 @@ function renderTable(data, searchedTerm) {
         });
     }
 
+    return nodeLookup;
+}
 
-    let phytochemicals = [];
-    let diseases = [];
-    let formulations = [];
-
-    // 2. Map Edges to Names based on your confirmed Labels
+function populateLists (data, nodeLookup, phytochemicals, diseases, formulations) {
     if (data.edges) {
         data.edges.forEach(edge => {
             const label = edge.data.label;
@@ -64,42 +58,92 @@ function renderTable(data, searchedTerm) {
 
             if (label === "FOUND_IN") {
                 // Usually: [Phytochemical] FOUND_IN [Plant]
-                if (sourceName) phytochemicals.push(sourceName);
+                if (sourceName) phytochemicals.push(edge.data.source);
             } 
             else if (label === "ASSOCIATED_WITH_DISEASE") {
                 // Usually: [Plant] ASSOCIATED_WITH_DISEASE [Disease]
-                if (targetName) diseases.push(targetName);
+                if (targetName) diseases.push(edge.data.target);
             } 
             else if (label === "IS_INGREDIENT_IN") {
                 // Usually: [Plant] IS_INGREDIENT_IN [Formulation]
-                if (targetName) formulations.push(targetName);
+                if (targetName) formulations.push(edge.data.target);
             }
         });
     }
+}
 
-    // 3. Remove duplicates and filter out "Unknown" or the plant name itself
+function cleanLists (phytochemicals, diseases, formulations) {
+    // Remove duplicates and filter out "Unknown" or the plant name itself
     const clean = (list) => [...new Set(list)]
-        .filter(n => n && n !== "Unknown")// && !n.toLowerCase().includes(searchedTerm.toLowerCase()))
-        .sort();
+                .filter(n => n && n !== "Unknown")
+                .sort();
     
+
     const pList = clean(phytochemicals);
     const dList = clean(diseases);
     const fList = clean(formulations);
 
-    const maxRows = Math.max(pList.length, dList.length, fList.length);
+    return [pList, dList, fList];
+}
 
-    if (maxRows === 0) {
+async function getDiseaseList(pList) {
+    cids = [];
+    for (i = 0; i<pList.length; i++) {
+        cids[i] = pList[i].cid;
+    }
+
+
+    // 1. Create an array of promises (the calls start immediately)
+    const promises = cids.map(async (item) => {
+        const response = await fetch(`https://api.example.com/data/${item}`);
+        return response.json();
+    });
+
+    // 2. Wait for all of them to settle
+    const results = await Promise.all(promises);
+    
+    console.log("All results received:", results);
+}
+
+function renderTable(data, searchedTerm) {
+    tableBody.innerHTML = ""; 
+
+    // Create a Lookup Map for Node Names
+    // id -> displayName
+    let nodeLookup = {};
+    nodeLookup = createNodeLookupFromPlantJSON(data, nodeLookup);
+
+    // Create and populate lists of phytochemicals, diseases and formulations using edges
+    let phytochemicals = [];
+    let diseases = [];
+    let formulations = [];
+    populateLists(data, nodeLookup, phytochemicals, diseases, formulations)
+
+    // Clean the lists
+    let listOfLists = cleanLists(phytochemicals, diseases, formulations);
+    pList = listOfLists[0];
+    dList = listOfLists[1];
+    fList = listOfLists[2];
+
+    const numRows = pList.length;
+
+    // If pList is empty, there is an error. Handle it
+    if (numRows === 0) {
         tableBody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>No specific data found for this entry.</td></tr>";
         return;
     }
 
-    // 4. Build Table Rows
-    for (let i = 0; i < maxRows; i++) {
+    // Look up phytochemical graph and get data from _that_ json
+    // Disease
+    getDiseaseList(pList);
+    // Formulation
+
+    // Actually build table rows
+    for (let i = 0; i < numRows; i++) {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${pList[i] || ""}</td>
-            <td>${fList[i] || ""}</td>
-            <td>${dList[i] || ""}</td>
+            <td>${nodeLookup[pList[i]] || ""}</td>
+            
         `;
         tableBody.appendChild(row);
     }
