@@ -16,6 +16,11 @@ searchBtn.addEventListener('click', async () => {
     const category = searchCategory.value; // 'plant', 'disease', etc.
     if (!userInput) return;
 
+    if (category=='default') {
+        alert("Please select category");
+        return;
+    }
+
     let response; // Declare variable here so it's accessible throughout the function
 
     try {
@@ -49,7 +54,7 @@ searchBtn.addEventListener('click', async () => {
 
     } catch (error) {
         console.error('Error:', error);
-        alert("Search 1error: " + error.message);
+        alert("Search error: " + error.message);
     }
 });
 
