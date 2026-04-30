@@ -6,6 +6,10 @@ searchBtn.addEventListener('click', async () => {
     const plantInput = document.getElementById('plantInput').value.trim();
     if (!plantInput) return;
 
+    // UNCOMMENT THIS BLOCK TO USE GRAYU API ENDPOINT
+    /* 
+    // -------------------------------------------------
+
     // Construct the endpoint
     const apiEndpoint = `${API_BASE}/api/plant-graph/${encodeURIComponent(plantInput)}`;
     
@@ -18,8 +22,29 @@ searchBtn.addEventListener('click', async () => {
         console.error("Fetch Error:", error);
         alert("Could not fetch data. Ensure you have a CORS extension enabled.");
     }
+
+    // -------------------------------------------------
+    */
+
+
+    // UNCOMMENT THIS BLOCK TO USE LOCAL JSON FILE
+    // -------------------------------------------------
+
+    // Moringa oleifera
+    const data = json.load("../example_json_files/plant_example.json")
+    renderTable(data, plantInput)
+
+    // -------------------------------------------------
+
 });
 
+/**
+ * This function populates the map nodeLookup using the data in the json file `data`
+ * nodeLookup maps a node's hash ID to the displayName of that node
+ * @param {json} data 
+ * @param {map} nodeLookup 
+ * @returns {map} nodeLookup
+ */
 function createNodeLookupFromPlantJSON (data, nodeLookup) {
     if (data.nodes) {
         data.nodes.forEach(node => {
@@ -47,6 +72,14 @@ function createNodeLookupFromPlantJSON (data, nodeLookup) {
     return nodeLookup;
 }
 
+/**
+ * 
+ * @param {json} data 
+ * @param {map} nodeLookup 
+ * @param {list} phytochemicals 
+ * @param {list} diseases 
+ * @param {list} formulations 
+ */
 function populateLists (data, nodeLookup, phytochemicals, diseases, formulations) {
     if (data.edges) {
         data.edges.forEach(edge => {
@@ -70,13 +103,18 @@ function populateLists (data, nodeLookup, phytochemicals, diseases, formulations
     }
 }
 
+/**
+ * Remove duplicates and filters out "Unknown" or the name itself
+ * @param {list} phytochemicals 
+ * @param {list} diseases 
+ * @param {list} formulations 
+ * @returns {list}
+ */
 function cleanLists (phytochemicals, diseases, formulations) {
-    // Remove duplicates and filter out "Unknown" or the plant name itself
     const clean = (list) => [...new Set(list)]
                 .filter(n => n && n !== "Unknown")
                 .sort();
     
-
     const pList = clean(phytochemicals);
     const dList = clean(diseases);
     const fList = clean(formulations);
@@ -84,6 +122,11 @@ function cleanLists (phytochemicals, diseases, formulations) {
     return [pList, dList, fList];
 }
 
+/**
+ * This function gets the json files for all the
+ * diseases associated with each plant in a pList
+ * @param {list} pList 
+ */
 async function getDiseaseList(pList) {
     cids = [];
     for (i = 0; i<pList.length; i++) {
@@ -102,11 +145,16 @@ async function getDiseaseList(pList) {
     console.log("All results received:", results);
 }
 
+/**
+ * This function rendes the table to the screen
+ * @param {json} data 
+ * @param {string} searchedTerm 
+ * @returns 
+ */
 function renderTable(data, searchedTerm) {
     tableBody.innerHTML = ""; 
 
-    // Create a Lookup Map for Node Names
-    // id -> displayName
+    // Create a Lookup Map for Node Names: id -> displayName
     let nodeLookup = {};
     nodeLookup = createNodeLookupFromPlantJSON(data, nodeLookup);
 
