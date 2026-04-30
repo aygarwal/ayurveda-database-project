@@ -17,19 +17,32 @@
         <div id="status"></div>
         
         <div class="result-area">
-            <table id="plantTable">
-                <thead>
-                    <tr>
-                        <th>Phytochemicals</th>
-                        <!--
-                        <th>Formulations</th>
-                        <th>Diseases</th>
-                        -->
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    </tbody>
-            </table>
+            <div class="tab-container">
+                <button class="tab-btn active" data-tab="phytochemicals">Phytochemicals</button>
+                <button class="tab-btn" data-tab="diseases">Diseases</button>
+                <button class="tab-btn" data-tab="formulations">Formulations</button>
+            </div>
+
+            <div id="phytochemicals" class="tab-content active">
+                <table>
+                    <thead><tr><th>Phytochemical Name</th></tr></thead>
+                    <tbody id="phytoBody"></tbody>
+                </table>
+            </div>
+
+            <div id="diseases" class="tab-content">
+                <table>
+                    <thead><tr><th>Disease Name</th></tr></thead>
+                    <tbody id="diseaseBody"></tbody>
+                </table>
+            </div>
+
+            <div id="formulations" class="tab-content">
+                <table>
+                    <thead><tr><th>Formulation Name</th></tr></thead>
+                    <tbody id="formBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
     <script src="js/script.js"></script>

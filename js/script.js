@@ -54,6 +54,23 @@ searchBtn.addEventListener('click', async () => {
 
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('.tab-btn');
+    const contents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Remove active class from all tabs and contents
+            tabs.forEach(t => t.classList.remove('active'));
+            contents.forEach(c => c.classList.remove('active'));
+
+            // Add active class to clicked tab and corresponding content
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+});
+
 /**
  * This function populates the map nodeLookup using the data in the json file `data`
  * nodeLookup maps a node's hash ID to the displayName of that node
@@ -168,44 +185,44 @@ async function getDiseaseList(pList) {
  * @returns 
  */
 function renderTable(data, searchedTerm) {
-    tableBody.innerHTML = ""; 
+    // Select the three different bodies
+    const phytoBody = document.getElementById('phytoBody');
+    const diseaseBody = document.getElementById('diseaseBody');
+    const formBody = document.getElementById('formBody');
 
-    // Create a Lookup Map for Node Names: id -> displayName
+    // Clear all
+    phytoBody.innerHTML = ""; 
+    diseaseBody.innerHTML = "";
+    formBody.innerHTML = "";
+
     let nodeLookup = {};
     nodeLookup = createNodeLookupFromPlantJSON(data, nodeLookup);
 
-    // Create and populate lists of phytochemicals, diseases and formulations using edges
     let phytochemicals = [];
     let diseases = [];
     let formulations = [];
-    populateLists(data, nodeLookup, phytochemicals, diseases, formulations)
+    populateLists(data, nodeLookup, phytochemicals, diseases, formulations);
 
-    // Clean the lists
-    let listOfLists = cleanLists(phytochemicals, diseases, formulations);
-    pList = listOfLists[0];
-    dList = listOfLists[1];
-    fList = listOfLists[2];
+    let [pList, dList, fList] = cleanLists(phytochemicals, diseases, formulations);
 
-    const numRows = pList.length;
+    // Helper to fill a specific table body
+    const fillTable = (list, bodyElement) => {
+        if (list.length === 0) {
+            bodyElement.innerHTML = "<tr><td>No data available.</td></tr>";
+            return;
+        }
+        list.forEach(id => {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${nodeLookup[id] || id}</td>`;
+            bodyElement.appendChild(row);
+        });
+    };
 
-    // If pList is empty, there is an error. Handle it
-    if (numRows === 0) {
-        tableBody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>No specific data found for this entry.</td></tr>";
-        return;
-    }
+    // Populate all three
+    fillTable(pList, phytoBody);
+    fillTable(dList, diseaseBody);
+    fillTable(fList, formBody);
 
-    // Look up phytochemical graph and get data from _that_ json
-    // Disease
-    getDiseaseList(pList);
-    // Formulation
-
-    // Actually build table rows
-    for (let i = 0; i < numRows; i++) {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${nodeLookup[pList[i]] || ""}</td>
-            
-        `;
-        tableBody.appendChild(row);
-    }
+    // Trigger your disease background fetch if needed
+    if (pList.length > 0) getDiseaseList(pList);
 }

@@ -81,3 +81,36 @@ td ul {
     margin: 0;
     padding-left: 18px;
 }
+
+/* Tab Buttons Container */
+.tab-container {
+    display: flex;
+    border-bottom: 2px solid #2e7d32;
+    margin-bottom: 10px;
+}
+
+.tab-btn {
+    background: #e0e0e0;
+    color: #333;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 4px 4px 0 0;
+    margin-right: 5px;
+    transition: 0.2s;
+}
+
+.tab-btn.active {
+    background: #2e7d32;
+    color: white;
+}
+
+/* Hide content by default */
+.tab-content {
+    display: none;
+}
+
+/* Show active content */
+.tab-content.active {
+    display: block;
+}
