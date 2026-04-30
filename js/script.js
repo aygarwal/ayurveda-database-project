@@ -23,14 +23,12 @@ searchBtn.addEventListener('click', async () => {
 function createNodeLookupFromPlantJSON (data, nodeLookup) {
     if (data.nodes) {
         data.nodes.forEach(node => {
-            // 1. Use 'let' instead of 'const' so we can update the value
             let displayName = "";
 
-            // 2. Safely grab labels (handles missing data or missing Label key)
-            // We force it to a string ("") so .toLowerCase() never fails
+            // Safely grab labels (handles missing data or missing Label key)
             const label = String(node.data?.label || node.label || "").toLowerCase();
 
-            // 3. Perform the checks
+            // Check type
             if (label === "Plant")
                 displayName = node.data.plant_name || "Unknown Plant";
             if (label === "phytochemical")
@@ -41,7 +39,7 @@ function createNodeLookupFromPlantJSON (data, nodeLookup) {
                 displayName = node.data.formulation_name || "Unknown Formulation";
             }
 
-            // 4. Fallback: if displayName is still empty, use the ID
+            // Fallback: if displayName is still empty, use the ID
             nodeLookup[node.data?.id] = displayName || node.data?.id || "Unknown ID";
         });
     }
@@ -57,15 +55,15 @@ function populateLists (data, nodeLookup, phytochemicals, diseases, formulations
             const targetName = nodeLookup[edge.data.target];
 
             if (label === "FOUND_IN") {
-                // Usually: [Phytochemical] FOUND_IN [Plant]
+                // [Phytochemical] FOUND_IN [Plant]
                 if (sourceName) phytochemicals.push(edge.data.source);
             } 
             else if (label === "ASSOCIATED_WITH_DISEASE") {
-                // Usually: [Plant] ASSOCIATED_WITH_DISEASE [Disease]
+                // [Plant] ASSOCIATED_WITH_DISEASE [Disease]
                 if (targetName) diseases.push(edge.data.target);
             } 
             else if (label === "IS_INGREDIENT_IN") {
-                // Usually: [Plant] IS_INGREDIENT_IN [Formulation]
+                // [Plant] IS_INGREDIENT_IN [Formulation]
                 if (targetName) formulations.push(edge.data.target);
             }
         });
@@ -92,14 +90,13 @@ async function getDiseaseList(pList) {
         cids[i] = pList[i].cid;
     }
 
-
-    // 1. Create an array of promises (the calls start immediately)
+    // Create an array of promises (the calls start immediately)
     const promises = cids.map(async (item) => {
         const response = await fetch(`https://api.example.com/data/${item}`);
         return response.json();
     });
 
-    // 2. Wait for all of them to settle
+    // Wait for all of them to settle
     const results = await Promise.all(promises);
     
     console.log("All results received:", results);
