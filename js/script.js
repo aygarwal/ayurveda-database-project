@@ -1,74 +1,56 @@
 const API_BASE = "https://caps.ncbs.res.in/GRAYU";
 const searchBtn = document.getElementById('searchBtn');
-const tableBody = document.getElementById('tableBody');
+const searchCategory = document.getElementById('searchCategory');
+const tabHeader = document.getElementById('tabHeader');
+const tabContentContainer = document.getElementById('tabContentContainer');
+
+const ALL_CATEGORIES = {
+    plant: "Plants",
+    disease: "Diseases",
+    formulation: "Formulations",
+    phytochemical: "Phytochemicals"
+};
 
 searchBtn.addEventListener('click', async () => {
-    const plantInput = document.getElementById('plantInput').value.trim();
-    if (!plantInput) return;
+    const userInput = document.getElementById('plantInput').value.trim();
+    const category = searchCategory.value; // 'plant', 'disease', etc.
+    if (!userInput) return;
 
-    // UNCOMMENT THIS BLOCK TO USE GRAYU API ENDPOINT
-    /* 
-    // -------------------------------------------------
+    let response; // Declare variable here so it's accessible throughout the function
 
-    // Construct the endpoint
-    const apiEndpoint = `${API_BASE}/api/plant-graph/${encodeURIComponent(plantInput)}`;
-    
     try {
+
+        // UNCOMMENT THIS BLOCK TO USE GRAYU API ENDPOINT
+        /* 
+        // -------------------------------------------------
+        // Construct the endpoint
+        const apiEndpoint = `${API_BASE}/api/plant-graph/${encodeURIComponent(plantInput)}`;
         const response = await fetch(apiEndpoint);
-        if (!response.ok) throw new Error("Network response was not ok");
-        const data = await response.json();
-        renderTable(data, plantInput);
-    } catch (error) {
-        console.error("Fetch Error:", error);
-        alert("Could not fetch data. Ensure you have a CORS extension enabled.");
-    }
-
-    // -------------------------------------------------
-    */
+        // -------------------------------------------------
+        */
 
 
-    // UNCOMMENT THIS BLOCK TO USE LOCAL JSON FILE
-    // -------------------------------------------------
+        // UNCOMMENT THIS BLOCK TO USE LOCAL JSON FILE
+        // -------------------------------------------------
+        const fileMap = {
+            'plant': '../example_json_files/plant_example.json',
+            'disease': '../example_json_files/disease_example.json',
+            'formulation': '../example_json_files/formulation_example.json',
+            'phytochemical': '../example_json_files/phytochemical_example.json'
+        };
+        const filePath = fileMap[category];
+        response = await fetch(filePath);
+        // -------------------------------------------------
 
-    // Moringa oleifera
-    try {
-        const response = await fetch('../example_json_files/plant_example.json');
-        
-        if (!response.ok) {
-            throw new Error("Network response was not ok");
-        }
+        if (!response.ok) throw new Error(`File not found: ${filePath}`);
 
         const data = await response.json();
-
-        // Now 'data' is accessible here
-        console.log(data);
-        renderTable(data, plantInput);
+        renderDynamicTabs(data, category);
 
     } catch (error) {
-        // Standard alert or console.error
         console.error('Error:', error);
-        alert("Data fetch error: " + error.message);
+        alert("Search 1error: " + error.message);
     }
-
-    // -------------------------------------------------
-
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    const tabs = document.querySelectorAll('.tab-btn');
-    const contents = document.querySelectorAll('.tab-content');
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            // Remove active class from all tabs and contents
-            tabs.forEach(t => t.classList.remove('active'));
-            contents.forEach(c => c.classList.remove('active'));
-
-            // Add active class to clicked tab and corresponding content
-            tab.classList.add('active');
-            document.getElementById(tab.dataset.tab).classList.add('active');
-        });
-    });
 });
 
 /**
@@ -86,16 +68,14 @@ function createNodeLookupFromPlantJSON (data, nodeLookup) {
             // Safely grab labels (handles missing data or missing Label key)
             const label = String(node.data?.label || node.label || "").toLowerCase();
 
-            // Check type
-            if (label === "Plant")
-                displayName = node.data.plant_name || "Unknown Plant";
-            if (label === "phytochemical")
+            if (label === "plant")
+                displayName = node.data?.plant_name || "Unknown Plant";
+            else if (label === "phytochemical")
                 displayName = node.data?.compound_name || "Unknown Phytochemical";
             else if (label === "disease")
-                displayName = node.data.name_display || "Unknown Disease"; 
-            else if (label === "formulation") {
-                displayName = node.data.formulation_name || "Unknown Formulation";
-            }
+                displayName = node.data?.name_display || "Unknown Disease";
+            else if (label === "formulation")
+                displayName = node.data?.formulation_name || "Unknown Formulation";
 
             // Fallback: if displayName is still empty, use the ID
             nodeLookup[node.data?.id] = displayName || node.data?.id || "Unknown ID";
@@ -113,24 +93,27 @@ function createNodeLookupFromPlantJSON (data, nodeLookup) {
  * @param {list} diseases 
  * @param {list} formulations 
  */
-function populateLists (data, nodeLookup, phytochemicals, diseases, formulations) {
+function populateLists(data, nodeLookup, phytochemicals, diseases, formulations, plants) {
     if (data.edges) {
         data.edges.forEach(edge => {
             const label = edge.data.label;
-            const sourceName = nodeLookup[edge.data.source];
-            const targetName = nodeLookup[edge.data.target];
+            const sourceId = edge.data.source;
+            const targetId = edge.data.target;
 
             if (label === "FOUND_IN") {
                 // [Phytochemical] FOUND_IN [Plant]
-                if (sourceName) phytochemicals.push(edge.data.source);
+                phytochemicals.push(sourceId);
+                plants.push(targetId); 
             } 
             else if (label === "ASSOCIATED_WITH_DISEASE") {
                 // [Plant] ASSOCIATED_WITH_DISEASE [Disease]
-                if (targetName) diseases.push(edge.data.target);
+                plants.push(sourceId);
+                diseases.push(targetId);
             } 
             else if (label === "IS_INGREDIENT_IN") {
                 // [Plant] IS_INGREDIENT_IN [Formulation]
-                if (targetName) formulations.push(edge.data.target);
+                plants.push(sourceId);
+                formulations.push(targetId);
             }
         });
     }
@@ -161,8 +144,8 @@ function cleanLists (phytochemicals, diseases, formulations) {
  * @param {list} pList 
  */
 async function getDiseaseList(pList) {
-    cids = [];
-    for (i = 0; i<pList.length; i++) {
+    let cids = [];
+    for (let i = 0; i<pList.length; i++) {
         cids[i] = pList[i].cid;
     }
 
@@ -184,45 +167,72 @@ async function getDiseaseList(pList) {
  * @param {string} searchedTerm 
  * @returns 
  */
-function renderTable(data, searchedTerm) {
-    // Select the three different bodies
-    const phytoBody = document.getElementById('phytoBody');
-    const diseaseBody = document.getElementById('diseaseBody');
-    const formBody = document.getElementById('formBody');
+function renderDynamicTabs(data, selectedCategory) {
+    // which 3 categories to show
+    const otherCategories = Object.keys(ALL_CATEGORIES).filter(cat => cat !== selectedCategory);
 
-    // Clear all
-    phytoBody.innerHTML = ""; 
-    diseaseBody.innerHTML = "";
-    formBody.innerHTML = "";
+    // Clear existing tabs
+    tabHeader.innerHTML = "";
+    tabContentContainer.innerHTML = "";
 
+    // Setup data structures
     let nodeLookup = {};
     nodeLookup = createNodeLookupFromPlantJSON(data, nodeLookup);
-
-    let phytochemicals = [];
-    let diseases = [];
-    let formulations = [];
-    populateLists(data, nodeLookup, phytochemicals, diseases, formulations);
-
-    let [pList, dList, fList] = cleanLists(phytochemicals, diseases, formulations);
-
-    // Helper to fill a specific table body
-    const fillTable = (list, bodyElement) => {
-        if (list.length === 0) {
-            bodyElement.innerHTML = "<tr><td>No data available.</td></tr>";
-            return;
-        }
-        list.forEach(id => {
-            const row = document.createElement('tr');
-            row.innerHTML = `<td>${nodeLookup[id] || id}</td>`;
-            bodyElement.appendChild(row);
-        });
+    
+    let results = {
+        plant: [],
+        phytochemical: [],
+        disease: [],
+        formulation: []
     };
+    
+    populateLists(
+        data, 
+        nodeLookup, 
+        results.phytochemical, 
+        results.disease, 
+        results.formulation, 
+        results.plant
+    );
+    // Create the Tabs and Tables
+    otherCategories.forEach((cat, index) => {
+        // Create Button
+        const btn = document.createElement('button');
+        btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
+        btn.textContent = ALL_CATEGORIES[cat];
+        btn.onclick = () => switchTab(cat);
+        tabHeader.appendChild(btn);
 
-    // Populate all three
-    fillTable(pList, phytoBody);
-    fillTable(dList, diseaseBody);
-    fillTable(fList, formBody);
+        // Create Table Content Div
+        const contentDiv = document.createElement('div');
+        contentDiv.id = `tab-${cat}`;
+        contentDiv.className = `tab-content ${index === 0 ? 'active' : ''}`;
+        
+        // Clean and Unique list
+        const displayList = [...new Set(results[cat])].filter(n => n && n !== "Unknown").sort();
 
-    // Trigger your disease background fetch if needed
-    if (pList.length > 0) getDiseaseList(pList);
+        // Build Table HTML
+        let tableHTML = `<table><thead><tr><th>${ALL_CATEGORIES[cat]} Name</th></tr></thead><tbody>`;
+        if (displayList.length === 0) {
+            tableHTML += `<tr><td>No related data found.</td></tr>`;
+        } else {
+            displayList.forEach(id => {
+                tableHTML += `<tr><td>${nodeLookup[id] || id}</td></tr>`;
+            });
+        }
+        tableHTML += `</tbody></table>`;
+        
+        contentDiv.innerHTML = tableHTML;
+        tabContentContainer.appendChild(contentDiv);
+    });
+}
+
+function switchTab(category) {
+    // UI logic to toggle classes
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent === ALL_CATEGORIES[category]);
+    });
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.toggle('active', content.id === `tab-${category}`);
+    });
 }

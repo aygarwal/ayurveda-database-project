@@ -10,40 +10,24 @@
     <div class="container">
         <h1>Plant Search</h1>
         <div class="search-box">
-            <input type="text" id="plantInput" placeholder="Enter plant name (e.g., Moringa)">
+            <select id="searchCategory">
+                <option value="plant">Plant Name</option>
+                <option value="disease">Disease</option>
+                <option value="formulation">Formulation</option>
+                <option value="phytochemical">Phytochemical</option>
+            </select>
+            <input type="text" id="plantInput" placeholder="Enter name...">
             <button id="searchBtn">Get JSON</button>
+        </div>
+
+        <div class="result-area">
+            <div id="tabHeader" class="tab-container"></div>
+
+            <div id="tabContentContainer"></div>
         </div>
         
         <div id="status"></div>
         
-        <div class="result-area">
-            <div class="tab-container">
-                <button class="tab-btn active" data-tab="phytochemicals">Phytochemicals</button>
-                <button class="tab-btn" data-tab="diseases">Diseases</button>
-                <button class="tab-btn" data-tab="formulations">Formulations</button>
-            </div>
-
-            <div id="phytochemicals" class="tab-content active">
-                <table>
-                    <thead><tr><th>Phytochemical Name</th></tr></thead>
-                    <tbody id="phytoBody"></tbody>
-                </table>
-            </div>
-
-            <div id="diseases" class="tab-content">
-                <table>
-                    <thead><tr><th>Disease Name</th></tr></thead>
-                    <tbody id="diseaseBody"></tbody>
-                </table>
-            </div>
-
-            <div id="formulations" class="tab-content">
-                <table>
-                    <thead><tr><th>Formulation Name</th></tr></thead>
-                    <tbody id="formBody"></tbody>
-                </table>
-            </div>
-        </div>
     </div>
     <script src="js/script.js"></script>
 </body>
