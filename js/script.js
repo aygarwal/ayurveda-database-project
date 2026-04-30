@@ -31,8 +31,24 @@ searchBtn.addEventListener('click', async () => {
     // -------------------------------------------------
 
     // Moringa oleifera
-    const data = json.load("../example_json_files/plant_example.json")
-    renderTable(data, plantInput)
+    try {
+        const response = await fetch('../example_json_files/plant_example.json');
+        
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+        }
+
+        const data = await response.json();
+
+        // Now 'data' is accessible here
+        console.log(data);
+        renderTable(data, plantInput);
+
+    } catch (error) {
+        // Standard alert or console.error
+        console.error('Error:', error);
+        alert("Data fetch error: " + error.message);
+    }
 
     // -------------------------------------------------
 
