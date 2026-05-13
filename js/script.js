@@ -12,7 +12,7 @@ const ALL_CATEGORIES = {
 };
 
 searchBtn.addEventListener('click', async () => {
-    const userInput = document.getElementById('plantInput').value.trim();
+    const userInput = document.getElementById('searchInput').value.trim();
     const category = searchCategory.value; // 'plant', 'disease', etc.
     if (!userInput) return;
 
@@ -21,7 +21,7 @@ searchBtn.addEventListener('click', async () => {
         return;
     }
 
-    let response; // Declare variable here so it's accessible throughout the function
+    let response;
 
     try {
 
@@ -29,7 +29,7 @@ searchBtn.addEventListener('click', async () => {
         /* 
         // -------------------------------------------------
         // Construct the endpoint
-        const apiEndpoint = `${API_BASE}/api/plant-graph/${encodeURIComponent(plantInput)}`;
+        const apiEndpoint = `${API_BASE}/api/plant-graph/${encodeURIComponent(searchInput)}`;
         const response = await fetch(apiEndpoint);
         // -------------------------------------------------
         */
@@ -65,7 +65,7 @@ searchBtn.addEventListener('click', async () => {
  * @param {map} nodeLookup 
  * @returns {map} nodeLookup
  */
-function createNodeLookupFromPlantJSON (data, nodeLookup) {
+function createNodeLookupFromJSON (data, nodeLookup) {
     if (data.nodes) {
         data.nodes.forEach(node => {
             let displayName = "";
@@ -94,11 +94,12 @@ function createNodeLookupFromPlantJSON (data, nodeLookup) {
  * 
  * @param {json} data 
  * @param {map} nodeLookup 
+ * @param {list} plants 
  * @param {list} phytochemicals 
  * @param {list} diseases 
  * @param {list} formulations 
  */
-function populateLists(data, nodeLookup, phytochemicals, diseases, formulations, plants) {
+function populateLists(data, nodeLookup, plants, phytochemicals, diseases, formulations) {
     if (data.edges) {
         data.edges.forEach(edge => {
             const label = edge.data.label;
@@ -182,7 +183,7 @@ function renderDynamicTabs(data, selectedCategory) {
 
     // Setup data structures
     let nodeLookup = {};
-    nodeLookup = createNodeLookupFromPlantJSON(data, nodeLookup);
+    nodeLookup = createNodeLookupFromJSON(data, nodeLookup);
     
     let results = {
         plant: [],
@@ -194,10 +195,10 @@ function renderDynamicTabs(data, selectedCategory) {
     populateLists(
         data, 
         nodeLookup, 
+        results.plant,
         results.phytochemical, 
         results.disease, 
-        results.formulation, 
-        results.plant
+        results.formulation
     );
     // Create the Tabs and Tables
     otherCategories.forEach((cat, index) => {
